@@ -11,6 +11,7 @@ import com.facebook.react.bridge.CatalystInstanceImpl;
 import com.facebook.react.bridge.JSBundleLoader;
 import com.facebook.react.bridge.JavaScriptExecutorFactory;
 import com.facebook.react.jscexecutor.JSCExecutorFactory;
+import com.facebook.v8.reactexecutor.V8ExecutorFactory;
 import com.facebook.react.bridge.JavaScriptExecutor;
 import com.facebook.react.bridge.NativeModuleCallExceptionHandler;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -65,8 +66,17 @@ public class ReactContextBuilder {
             SoLoader.loadLibrary("jscexecutor");
             return new JSCExecutorFactory(appName, deviceName);
         } catch (UnsatisfiedLinkError jscE) {
-            // Otherwise use Hermes
+            return loadHermesOrV8();
+        }
+    }
+
+    private JavaScriptExecutorFactory loadHermesOrV8() {
+        try {
+            // Use Hermes if found otherwise use V8
+            SoLoader.loadLibrary("hermes");
             return new HermesExecutorFactory();
+        } catch (UnsatisfiedLinkError hermesJscE) {
+            return new V8ExecutorFactory();
         }
     }
 
