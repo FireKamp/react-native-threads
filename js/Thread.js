@@ -4,8 +4,8 @@ import {
 } from 'react-native';
 
 const { ThreadManager } = NativeModules;
-
 export default class Thread {
+  eventSubscription = null
   constructor(jsPath) {
     if (!jsPath || !jsPath.endsWith('.js')) {
       throw new Error('Invalid path for thread. Only js files are supported');
@@ -13,7 +13,7 @@ export default class Thread {
 
     this.id = ThreadManager.startThread(jsPath.replace(".js", ""))
       .then(id => {
-        DeviceEventEmitter.addListener(`Thread${id}`, (message) => {
+        this.eventSubscription = DeviceEventEmitter.addListener(`Thread${id}`, (message) => {
           !!message && this.onmessage && this.onmessage(message);
         });
         return id;
@@ -26,6 +26,9 @@ export default class Thread {
   }
 
   terminate() {
+    this.eventSubscription && this.eventSubscription.remove()
+    this.eventSubscription = null
+    this.onmessage = null
     this.id.then(ThreadManager.stopThread);
   }
 }
